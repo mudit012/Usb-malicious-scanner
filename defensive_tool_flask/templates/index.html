@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Flask Defensive Tool</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    textarea { width: 100%; height: 200px; }
+    .box { border: 1px solid #ddd; padding: 12px; margin-bottom: 12px; border-radius: 6px; }
+    button { padding: 8px 12px; cursor: pointer; }
+    .ip { font-family: monospace; background:#f5f5f5; padding:4px 6px; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <h1>Flask Defensive Tool — Demo</h1>
+  <div class="box">
+    <h3>Scan Logs</h3>
+    <form id="scanForm">
+      <textarea id="logText" placeholder="Paste log contents here..."></textarea><br>
+      <button type="button" onclick="scan()">Scan</button>
+    </form>
+    <pre id="scanResult"></pre>
+  </div>
+
+  <div class="box">
+    <h3>Block / Unblock IP</h3>
+    <input id="ipInput" placeholder="IP to block/unblock" />
+    <button onclick="blockIp()">Block</button>
+    <button onclick="unblockIp()">Unblock</button>
+    <pre id="blockResult"></pre>
+  </div>
+
+  <div class="box">
+    <h3>Blocklist</h3>
+    <button onclick="refreshList()">Refresh</button>
+    <pre id="blocklistArea"></pre>
+  </div>
+
+<script>
+async function scan(){
+  const log = document.getElementById("logText").value;
+  const resp = await fetch('/api/scan-logs', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({log})
+  });
+  const data = await resp.json();
+  document.getElementById("scanResult").textContent = JSON.stringify(data, null, 2);
+}
+async function blockIp(){
+  const ip = document.getElementById("ipInput").value;
+  const resp = await fetch('/api/block-ip', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ip, reason:'manual from UI'})
+  });
+  document.getElementById("blockResult").textContent = JSON.stringify(await resp.json(), null, 2);
+  refreshList();
+}
+async function unblockIp(){
+  const ip = document.getElementById("ipInput").value;
+  const resp = await fetch('/api/unblock-ip', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ip})
+  });
+  document.getElementById("blockResult").textContent = JSON.stringify(await resp.json(), null, 2);
+  refreshList();
+}
+async function refreshList(){
+  const resp = await fetch('/api/blocklist');
+  document.getElementById("blocklistArea").textContent = JSON.stringify(await resp.json(), null, 2);
+}
+refreshList();
+</script>
+</body>
+</html>
